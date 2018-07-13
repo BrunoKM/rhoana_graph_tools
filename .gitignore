@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# The datasets
+datasets
+datasets/*
+!datasets/kasthuri_original.xls
+
+# Pycharm
+.idea
