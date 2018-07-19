@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
+import struct
 import math
 
 
@@ -174,7 +175,6 @@ def allocate_neurons(df, num_neurons, copy=False):
     num_inh = math.floor(num_neurons * fraction_inh_neurons)
     num_exc = num_neurons - num_inh
 
-
     exc_axon_neuron_assignment = assign_random_neurons(unique_exc_axons, num_exc)
     exc_dendrite_neuron_assignment = assign_random_neurons(unique_exc_dendrites, num_exc)
     inh_axon_neuron_assignment = assign_random_neurons(unique_inh_axons, num_inh)
@@ -294,9 +294,133 @@ def convert_to_bipartite(G):
     pass
 
 
+def write_graph_to_binary(G, filepath):
+    """Save the graph to a binary file. The values are stored as follows:
+    'input_neuron_id': unsigned long (L)
+    'output_neuron_id': unsigned long (L)
+    'synapse_id': unsigned long long (Q)
+    'psd_centroid_x': float (f)
+    'psd_centroid_y': float (f)
+    'psd_centroid_z': float (f)
+    'in_cylinder_1': bool (?)
+    'in_cylinder_2': bool (?)
+    'in_cylinder_3': bool (?)
+    'axon_id': long long (q)
+    'axon_skeleton_length': float (f)
+    'axon_terminal': short (h)
+    'bouton_id': long long (q)
+    'mitochondria_count': short (h)
+    'multisynaptic_bouton': short (h)
+    'num_synapses_on_spine': short (h)
+    'psd_size': int (i)
+    'spine_apparatus': short (h)
+    'spine_id': long (l)
+    'spine_or_shaft': short (h)
+    'spine_vol': int (i)
+    'vesicle_count': int (i)
+    """
+    with open(filepath, 'wb') as out_file:
+        for u, v, d in G.edges(data=True):
+            edge_bytes = struct.pack('=LLQfff???qfhqhhhihlhii', int(u), int(v),
+                        int(d['synapse_id']),
+                        d['psd_centroid_x'],
+                        d['psd_centroid_y'],
+                        d['psd_centroid_z'],
+                        int(d['in_cylinder_1']),
+                        int(d['in_cylinder_2']),
+                        int(d['in_cylinder_3']),
+                        int(d['axon_id']),
+                        d['axon_skeleton_length'],
+                        int(d['axon_terminal']),
+                        int(d['bouton_id']),
+                        int(d['mitochondria_count']),
+                        int(d['multisynaptic_bouton']),
+                        int(d['num_synapses_on_spine']),
+                        int(d['psd_size']),
+                        int(d['spine_apparatus']),
+                        int(d['spine_id']),
+                        int(d['spine_or_shaft']),
+                        int(d['spine_vol']),
+                        int(d['vesicle_count']))
+            out_file.write(edge_bytes)
+    return
+
+
+def read_binary_to_graph(filepath):
+    G = nx.MultiDiGraph()
+
+    with open(filepath, 'rb') as in_file:
+        while True:
+            edge_bytes = in_file.read(79)  # todo: Replace with class variable
+            if not edge_bytes: break
+            assert len(edge_bytes) == 79
+
+            edge_data = struct.unpack('=LLQfff???qfhqhhhihlhii', edge_bytes)
+            input_neuron_id = edge_data[0]
+            output_neuron_id = edge_data[1]
+            attribute_dict = dict()
+            attribute_dict['synapse_id'] = edge_data[2]
+            attribute_dict['psd_centroid_x'] = edge_data[3]
+            attribute_dict['psd_centroid_y'] = edge_data[4]
+            attribute_dict['psd_centroid_z'] = edge_data[5]
+            attribute_dict['in_cylinder_1'] = edge_data[6]
+            attribute_dict['in_cylinder_2'] = edge_data[7]
+            attribute_dict['in_cylinder_3'] = edge_data[8]
+            attribute_dict['axon_id'] = edge_data[9]
+            attribute_dict['axon_skeleton_length'] = edge_data[10]
+            attribute_dict['axon_terminal'] = edge_data[11]
+            attribute_dict['bouton_id'] = edge_data[12]
+            attribute_dict['mitochondria_count'] = edge_data[13]
+            attribute_dict['multisynaptic_bouton'] = edge_data[14]
+            attribute_dict['num_synapses_on_spine'] = edge_data[15]
+            attribute_dict['psd_size'] = edge_data[16]
+            attribute_dict['spine_apparatus'] = edge_data[17]
+            attribute_dict['spine_id'] = edge_data[18]
+            attribute_dict['spine_or_shaft'] = edge_data[19]
+            attribute_dict['spine_vol'] = edge_data[20]
+            attribute_dict['vesicle_count'] = edge_data[21]
+
+            G.add_edges_from([(input_neuron_id, output_neuron_id, attribute_dict)])
+    return G
+
+
 def convert_to_compact(G):
     """Take a semi-compact representation (directed multigraph), and turn it into compact representation (digraph)"""
-    
+    # Create a DiGraph from the MultiDiGraph representation
+    G_compact = nx.DiGraph(G)
+
+    for edge in G_compact.edges.keys():
+        # Clear all the previous attributes (they are only relevant to edges in MultiGraphs)
+        G_compact.edges[edge].clear()
+        num_synapses = G.get_edge_data(*edge)
+        G_compact.egdes[edge]['num_synapses'] = num_synapses
+    return G_compact
+
+
+def test_save_to_binary():
+    df = read_kasthuri_generated('datasets/kasthuri_generated200.xls')
+    G = kasthuri_to_graph(df)
+    # Write graph to a test binary file
+    write_graph_to_binary(G, 'datasets/kasthuri_binary_test.bin')
+    G_from_bin = read_binary_to_graph('datasets/kasthuri_binary_test.bin')
+    for edge in G.edges:
+        attr_original = G.edges[edge]
+        attr_from_bin = G_from_bin.edges[edge]
+        for key in attr_original.keys():
+            try:
+                assert attr_original[key] == attr_from_bin[key]
+            except AssertionError as error:
+                # If the numbers aren't equal, check that they are equal to a significant number of
+                # significant figures (they could differ due to floating point rounding errors)
+                if not math.isclose(attr_original[key], attr_from_bin[key], abs_tol=0.0001):
+                    # If the numbers differ by more than the error margin, re-raise the exception with additional
+                    # information
+                    error.args += (f"The attribute {key} differs.\n"
+                                   f"Original: {attr_original[key]}, rounded: {round(attr_original[key], 2)}\n"
+                                   f"From binary: {attr_from_bin[key]}, rouned: {round(attr_from_bin[key], 2):}", )
+                    raise
+    return
+
 
 if __name__ == '__main__':
     # df = read_kasthuri_original('datasets/kasthuri_original.xls')
@@ -305,9 +429,11 @@ if __name__ == '__main__':
     # df_generated.to_excel('datasets/kasthuri_generated200.xls')
 
     df = read_kasthuri_generated('datasets/kasthuri_generated200.xls')
-    print(df.dtypes)
-
     G = kasthuri_to_graph(df)
+
+    write_graph_to_binary(G, 'datasets/kasthuri_graph.bin')
+
+    G = read_binary_to_graph('datasets/kasthuri_graph.bin')
 
 
 # Synapse No.
