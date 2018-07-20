@@ -79,6 +79,9 @@ def random_weighted_with_min_motif_freq(motif, min_freq, num_nodes, motif_edge_s
         rand_connection_weights = rand_connection_fill
 
     adj_matrix += rand_connection_weights
+
+    if discrete:
+        ajd_matrix = np.round(adj_matrix)
     return adj_matrix
 
 
