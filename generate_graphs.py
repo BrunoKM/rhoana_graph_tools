@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import graph_utils
+import time
 
 
 def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, shuffle_on_connecting=True):
@@ -28,16 +29,16 @@ def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, sh
     # Depending on min frequency, motif size and the number of nodes, overlap between motifs might be necessary.
     # Randomise the overlap size by randomly selecting the indices for the addition of motifs
     # on the overall adjacency matrix
-    steps = get_random_steps(min_freq, num_nodes, motif_size)
+    indices = get_random_indices(min_freq - 1, num_nodes, motif_size)
 
-    i = 0  # This keeps the index around the diagonal of where to input the next array
     adj_matrix[0:motif_size, 0:motif_size] += motif
     mask[0:motif_size, 0:motif_size] = 1
+    last_idx = 0
 
-    # Keep the motif matrix as ordered last time.
+    # Store the motif matrix as it was ordered last time.
     last_motif_mat = motif
-    for step in steps:
-        i += step
+    for i in indices:
+        step = i - last_idx
         if step >= motif_size:
             # There is no overlap, just insert the matrix
             adj_matrix[i:i + motif_size, i:i + motif_size] = motif
@@ -67,6 +68,8 @@ def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, sh
             last_motif_mat = adj_matrix[i:i + motif_size, i:i + motif_size]
         else:
             last_motif_mat = motif
+        last_idx = i
+
     # Fill in the values not filled in by the motifs with random connections with connectivity p
     if connectivity is None:
         # If connectivity not specified, use the average connectivity of the parts filled in with the motifs
@@ -76,33 +79,24 @@ def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, sh
         p = connectivity
     rand_connection_fill = np.random.binomial(1, p, size=adj_matrix.shape)
     # Zero-out the entries that coincide with the motifs assigned earlier
-    mask_reverse = np.ones(adj_matrix.shape, dtype=np.int32) - mask
-    rand_connection_fill *= mask_reverse
+    mask_inverse = np.ones(adj_matrix.shape, dtype=np.int32) - mask
+    rand_connection_fill *= mask_inverse
     # Finally combine the motif entries and the randomly generated connections
     adj_matrix += rand_connection_fill
     return adj_matrix
 
 
-def get_random_steps(min_freq, num_nodes, motif_size):
+def get_random_indices(num_indices, num_nodes, motif_size):
     """
-    Get random indices for random_with_min_motif_freq. The result should be a random array of size min_freq that
+    Get random indices for random_with_min_motif_freq. The result should be a random array of size num_indices that
     holds the ordered random indices for diagonal positions where to add motifs. Each element must be smaller than
-    or equal to (num_nodes - motif_size). Also, no two elements can be the same
+    or equal to (num_nodes - motif_size) and larger than 0. Also, no two elements can be the same
     """
-    num_steps = min_freq - 1
-    steps_base = np.ones([num_steps], np.int32)
-
-    # Generate random addition to steps base to make the sum equal to num_nodes - motif_size
-    steps_add = np.random.uniform(0, 1, size=[num_steps])
-    # Make sure the sum is equal to num_nodes - sum(steps_base) - motif_size
-    steps_add *= (num_nodes - num_steps - motif_size) / np.sum(steps_add)
-    # Round the numbers to the closest integer
-    steps_add = steps_add.round().astype(np.int32)
-    if np.sum(steps_add) != num_nodes - num_steps - motif_size:
-        # If the there were any values with .50000 in decimal places, the rounding could have changed the sum
-        # Run the function again to get new steps_add
-        return get_random_steps(min_freq, num_nodes, motif_size)
-    return steps_base + steps_add
+    max_index = num_nodes - motif_size
+    # Sample without replacement from range (1, max_index + 1)
+    indices = np.random.choice(np.arange(1, max_index + 1), size=num_indices, replace=False)
+    # Return the sorted indices
+    return np.sort(indices)
 
 
 def random_with_second_order(num_nodes, p, a_recip, a_conv, a_div, a_chain):
@@ -131,3 +125,8 @@ if __name__ == '__main__':
     motif = np.array([[0, 1, 1, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 1, 1, 0]])
     g = random_with_min_motif_freq(motif, 23, 30)
     print(g)
+    for size in [1000, 3000, 5000, 8000, 10000]:
+        start_time = time.time()
+        g = random_with_min_motif_freq(motif, 100, size)
+        print(f"Size: {size}, Time taken: {time.time() - start_time:.2f}s")
+        del g
