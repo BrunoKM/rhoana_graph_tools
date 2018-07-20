@@ -27,7 +27,10 @@ def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, sh
         p = connectivity
     rand_connection_fill = np.random.binomial(1, p, size=adj_matrix.shape)
     # Zero-out the entries that coincide with the motifs assigned earlier
-    mask_inverse = np.ones(adj_matrix.shape, dtype=np.int8) - mask
+    mask_inverse = np.logical_not(mask)
+    # Zero-out the entries on the diagonal (no self-loops)
+    mask_inverse = np.logical_and(mask_inverse, np.logical_not(np.eye(num_nodes, dtype=np.bool)))
+
     rand_connection_fill *= mask_inverse
     # Finally combine the motif entries and the randomly generated connections
     adj_matrix += rand_connection_fill
@@ -63,25 +66,37 @@ def random_weighted_with_min_motif_freq(motif, min_freq, num_nodes, motif_edge_s
     # Fill in the values not filled in by the motifs with random connections with connectivity p
     if connectivity is None:
         # If connectivity not specified, use the average connectivity of the parts filled in with the motifs
-        p = np.sum(adj_matrix * mask) / np.sum(mask)
+        if discrete:
+            # If the values will be rounded, the connections (or edges) are values larger or equal to 0.5
+            num_edges = np.sum(adj_matrix >= 0.5)
+        else:
+            # If the values will be rounded, any positive value is a connection
+            num_edges = np.sum(adj_matrix > 0)
+        p = np.sum(num_edges) / np.sum(mask)
     else:
         # Otherwise use the value given
         p = connectivity
     rand_connection_fill = np.random.binomial(1, p, size=adj_matrix.shape)
     # Zero-out the entries that coincide with the motifs assigned earlier
-    mask_inverse = np.ones(adj_matrix.shape, dtype=np.int32) - mask
+    mask_inverse = np.logical_not(mask)
+    # Zero-out the entries on the diagonal (no self-loops)
+    mask_inverse = np.logical_and(mask_inverse, np.logical_not(np.eye(num_nodes, dtype=np.bool)))
     rand_connection_fill *= mask_inverse
+
     if rand_edge_std != 0:
         # Get the random weights for the connected edges
         rand_connection_weights = (edge_var * rand_edge_std) + rand_edge_mean
         rand_connection_weights *= rand_connection_fill
     else:
-        rand_connection_weights = rand_connection_fill
+        rand_connection_weights = rand_connection_fill * rand_edge_mean
 
     adj_matrix += rand_connection_weights
 
     if discrete:
-        ajd_matrix = np.round(adj_matrix)
+        adj_matrix = np.round(adj_matrix)
+
+    # Finally, rectify the values so that all weights take on non-negative values
+    adj_matrix[adj_matrix < 0] = 0
     return adj_matrix
 
 
@@ -186,12 +201,15 @@ if __name__ == '__main__':
     # todo: remove
     motif = np.array([[0, 1, 1], [0, 0, 1], [0, 1, 0]])
     g = random_with_min_motif_freq(motif, 3, 10)
-    print(g)
+    g2 = random_weighted_with_min_motif_freq(motif, 3, 10, shuffle_on_connecting=True, motif_edge_std=1.2,
+                                             rand_edge_mean=30, rand_edge_std=1.4, discrete=False)
+    print(np.sum(np.eye(g.shape[0]) * g), np.sum(np.eye(g2.shape[0]) * g2))
+    print(g2)
     motif = np.array([[0, 1, 1, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 1, 1, 0]])
     g = random_with_min_motif_freq(motif, 23, 30)
     print(g)
     for size in [1000, 3000, 5000, 8000, 10000]:
         start_time = time.time()
-        g = random_with_min_motif_freq(motif, int(size/2), size, shuffle_on_connecting=False)
+        g = random_weighted_with_min_motif_freq(motif, int(size/2), size, shuffle_on_connecting=False, discrete=True)
         print(f"Size: {size}, Time taken: {time.time() - start_time:.2f}s")
         del g
