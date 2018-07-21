@@ -166,6 +166,37 @@ def rand_allocate_motifs(motif, min_freq, num_nodes, shuffle_on_connecting, dtyp
     return adj_matrix, mask
 
 
+def random_preferential_by_distance():
+    """
+    Generate a random graph where the connections have higher probabilities when the nodes are close. The nodes are
+    randomly distributed in 3d space and distance between each node has to be computed (which is the computationally
+    expensive process. The process can be made faster for larger network by truncating the Gaussian filter and only
+    considering distances to the nodes that lie close.
+    :return:
+    """
+    pass
+
+
+def random_preferential_grid_pos_2d():
+    """
+    Generate a random graph where the connections have higher probabilities when the nodes are close. Assumes the nodes
+    are uniformly spaced on a 2d grid. Elegant solution using a 2d Gaussian kernel.
+    :return:
+    """
+    # todo: complete
+    pass
+
+
+def random_preferential_grid_pos_3d():
+    """
+    Generate a random graph where the connections have higher probabilities when the nodes are close. Assumes the nodes
+    are uniformly spaced on a 3d grid.
+    :return:
+    """
+    # todo: complete
+    pass
+
+
 def get_random_indices(num_indices, num_nodes, motif_size):
     """
     Get random indices for random_with_min_motif_freq. The result should be a random array of size num_indices that
