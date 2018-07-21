@@ -1,6 +1,8 @@
 import networkx as nx
 import numpy as np
 import graph_utils
+import itertools
+import math
 import time
 
 
@@ -166,7 +168,70 @@ def rand_allocate_motifs(motif, min_freq, num_nodes, shuffle_on_connecting, dtyp
     return adj_matrix, mask
 
 
-def random_preferential_by_distance():
+def random_preferential_by_dist(num_nodes, conn_prob_function, function_diameter=None, dist_dtype=np.float32):
+    """
+    Generate a random graph where the connections have higher probabilities when the nodes are close. The nodes are
+    randomly distributed in 3d space and distance between each node has to be computed (which is the computationally
+    expensive process.
+    :return:
+    """
+    coord = np.uniform(size=[num_nodes, 3], dtype=dist_dtype)
+    # todo: add simplified functionality when diameter = None
+    num_divs = 1 / function_diameter
+    # Initialise an empty array to store the arrays of points within each division
+    divs = np.empty([num_divs] * 3, dtype=np.ndarray)
+    # Divide the point within the space into the divisions
+    for x, y, z in itertools.product(range(num_divs), repeat=3):
+        coord_in_range = _get_coord_in_range(coord, x * function_diameter, y * function_diameter,
+                                            z * function_diameter, function_diameter)
+        div = coord[coord_in_range, :]
+        divs[x, y, z] = div
+    # Calculate distances between points in the same division todo: do this later
+
+    # Calculate distances between points in neighbouring divisions
+    for x1, y1, z1 in itertools.product(range(num_divs), repeat=3):
+        for x2, y2, z2 in _get_neighbouring_idxs(x1, y1, z1):
+            # todo: some function to calculate distance between each pair of points (check if convolution faster?)
+            pass
+
+
+    return
+
+
+def _get_coord_in_range(coord, min_x, min_y, min_z, interval_length):
+    coord_in_range_x = np.logical_and(coord[:, 0] >= min_x, coord[:, 0] < min_x + interval_length)
+    coord_in_range_y = np.logical_and(coord[:, 1] >= min_y, coord[:, 1] < min_y + interval_length)
+    coord_in_range_z = np.logical_and(coord[:, 2] >= min_z, coord[:, 2] < min_z + interval_length)
+    coord_in_range = np.logical_and(np.logical_and(coord_in_range_x, coord_in_range_y), coord_in_range_z)
+    return coord_in_range
+
+
+def _get_neighbouring_idxs(x, y, z, num_divs):
+    # todo: test this function (I don't trust myself
+    """
+    Use the following 'elegant' manually combined list of indices in order to consider all the divisions
+    neighbouring to (x1, y1, z1) that we haven't considered before.
+    """
+    # Computer the limits for each index (so that the generated indices don't
+    # step out of bounds (i.e. (x, y, z) < num_divs)
+    x_limit = min(x + 2, num_divs) # x indices have to be smaller than this limit
+    y_limit = min(y + 2, num_divs)
+    z_limit = min(z + 2, num_divs)
+    neighbour_idxs = [x, y, z]
+    # First consider all indices in range (x - 1, x + 1) (y - 1, y + 1) in the layer above in the z direction
+    if z + 1 < num_divs:
+        neighbour_idxs += list(itertools.product(range(x - 1, x_limit), range(y - 1, y_limit), [z + 1]))
+    # Consider all indices in range (x - 1, x + 1) at y + 1 in the current z layer (z)
+    if y + 1 < num_divs:
+        neighbour_idxs += list(itertools.product(range(x - 1, x_limit), [y + 1], [z]))
+    # Consider the next index in the current column (y, z).
+    if x + 1 < num_divs:
+        neighbour_idxs += [x + 1, y, z]
+    # Consider the pairwise distances between points in the division itself
+    return neighbour_idxs
+
+
+def random_gaussian_preferential_by_dist(gauss_std, const):
     """
     Generate a random graph where the connections have higher probabilities when the nodes are close. The nodes are
     randomly distributed in 3d space and distance between each node has to be computed (which is the computationally
