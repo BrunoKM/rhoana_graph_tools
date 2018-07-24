@@ -218,10 +218,10 @@ def random_preferential_by_dist(num_nodes, conn_prob_function, function_diameter
     # zeros along the diagonal.
     adj_matrix *= np.ones(adj_matrix.shape, dtype=adj_matrix_dtype) - np.eye(num_nodes, dtype=adj_matrix_dtype)
 
-    return adj_matrix
+    return adj_matrix, coord, coord_idxs, distance_matrix
 
 
-def _get_point_divisions(coord, num_divs, function_diameter): #  todo: test this function
+def _get_point_divisions(coord, num_divs, function_diameter):  # todo: test this function
     """
     Separate the points in space with coordinates specified in coord into neighbouring cubic subspaces (a grid).
     Each cube in the grid can be indexed into in array divs which stores the coordinates and ids of the points within

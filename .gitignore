@@ -108,5 +108,11 @@ datasets
 datasets/*
 !datasets/kasthuri_original.xls
 
+# Plotting
+/graphs
+
 # Pycharm
 .idea
+
+
+*./png
