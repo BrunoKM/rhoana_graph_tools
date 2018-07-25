@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 
 def gaussian_function(x, peak_height=None, std=1.0, mean=0.0):
@@ -46,5 +47,16 @@ def inverse_gaussian(x, peak_height=None, std=1.0, mean=0.0):
         if x <= 0:
             res = np.nan
         else:
-            res = mean + std * np.sqrt(-2 * np.log(x_positive))
+            res = mean + std * np.sqrt(-2 * np.log(x))
     return res
+
+
+def dump_with_pickle(object_, filepath):
+    with open(filepath, 'wb') as file:
+        pickle.dump(object_, file)
+
+
+def load_with_pickle(filepath):
+    with open(filepath, 'rb') as file:
+        object_ = pickle.load(file)
+    return object_

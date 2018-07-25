@@ -221,7 +221,7 @@ def random_preferential_by_dist(num_nodes, conn_prob_function, function_diameter
     return adj_matrix, coord, coord_idxs, distance_matrix
 
 
-def _get_point_divisions(coord, num_divs, function_diameter):  # todo: test this function
+def _get_point_divisions(coord, num_divs, function_diameter):
     """
     Separate the points in space with coordinates specified in coord into neighbouring cubic subspaces (a grid).
     Each cube in the grid can be indexed into in array divs which stores the coordinates and ids of the points within
@@ -250,7 +250,7 @@ def _get_point_divisions(coord, num_divs, function_diameter):  # todo: test this
 
     coord_idxs = np.zeros(shape=coord.shape[0], dtype=np.int32)
     # Divide the point within the space into the divisions
-    for x, y, z in itertools.product(range(num_divs), repeat=3):
+    for z, y, x in itertools.product(range(num_divs), repeat=3):
         coord_in_range = _get_coord_in_range(coord, x * function_diameter, y * function_diameter,
                                              z * function_diameter, function_diameter)
         # Get the number of points in this division
@@ -401,7 +401,6 @@ def random_with_second_order(num_nodes, p, a_recip, a_conv, a_div, a_chain):
 
 
 if __name__ == '__main__':
-    # # todo: remove
     # motif = np.array([[0, 1, 1], [0, 0, 1], [0, 1, 0]])
     # g = random_with_min_motif_freq(motif, 3, 10)
     # g2 = random_weighted_with_min_motif_freq(motif, 3, 10, shuffle_on_connecting=True, motif_edge_std=1.2,
