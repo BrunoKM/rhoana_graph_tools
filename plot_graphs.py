@@ -94,7 +94,7 @@ def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
             node2 = coord[j, 1:]
             x = [node1[0], node2[0]]
             y = [node1[1], node2[1]]
-            opacity = min(0.2 + 0.3 *(1.45 - distance), 0.75)
+            opacity = min(0.2 + 0.3 * (1.45 - distance), 0.75)
             color_idx = int(((sum(x)*num_colours + sum(y))/14) * num_colours) % num_colours
             # color_idx = int(((sum(x)**2 + sum(y)**2) / 8) * num_colours)
             # color_idx = int((min((0.5 - distance)/0.5, 0.99)) * 10)
@@ -115,13 +115,13 @@ def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
     plt.plot(bins[:-1], histogram_norm, color=tableau20[7], alpha=0.6, lw=1.4, label='Distribution of edge lengths')
     x = np.linspace(0.01, 1, 1000)
     gaussian = gaussian_function(x, peak_height=1, std=gauss_std)
-    plt.plot(x, gaussian, color=tableau20[6], alpha=0.8, lw=1.4, label='Distance $\mapsto$ edge probability function')
+    plt.plot(x, gaussian, color=tableau20[9], alpha=0.8, lw=3.4, label='Distance $\mapsto$ edge probability function')
     # Lastly, plot the distribution of all the distances for comparison
 
     dist_array = np.ravel(distances)
     histogram, bins = np.histogram(dist_array, bins=60, range=[0.001, 1.001], density=True)
     histogram_norm = histogram / np.max(histogram)
-    plt.plot(bins[:-1], histogram_norm, color=tableau20[8], alpha=0.3, lw=2, label='Distribution of all distances')
+    plt.plot(bins[:-1], histogram_norm, color=tableau20[0], alpha=0.2, lw=2, label='Distribution of all distances')
     plt.legend()
     plt.savefig("histogram.png", bbox_inches="tight", dpi=250)
     return
