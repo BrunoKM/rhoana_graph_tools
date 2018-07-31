@@ -1,5 +1,5 @@
 import numpy as np
-import itertools
+import networkx as nx
 
 
 def rearrange_adj_matrix(matrix, ordering):
