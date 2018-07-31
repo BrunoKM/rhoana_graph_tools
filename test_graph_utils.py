@@ -1,7 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
-from utils import *
+from graph_utils import *
+
+
+def test_rand_permute_adj_matrix():
+    # Test params
+    node_range = range(5, 20)
+    tests_per_nodes = 5
+
+    # Run tests
+    for num_nodes in node_range:
+        for _ in range(tests_per_nodes):
+            adj_mat = np.random.randint(0, 2, size=[num_nodes] * 2)
+            adj_mat -= adj_mat * np.eye(num_nodes, dtype=adj_mat.dtype)  # Make sure diagonal entries zero
+            adj_mat_perm = graph_utils.rand_permute_adj_matrix(adj_mat)
+            assert graph_utils.is_isomorphic_from_adj(adj_mat, adj_mat_perm)
+    return
 
 
 def test_inverse_function():

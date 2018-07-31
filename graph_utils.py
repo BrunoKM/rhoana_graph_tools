@@ -26,6 +26,14 @@ def rand_permute_adj_matrix(matrix):
     return matrix_permuted
 
 
+def is_isomorphic_from_adj(adj_mat_1, adj_mat_2):
+    """Checks whether two graphs are isomorphic taking adjacency matrices as inputs"""
+    g1 = nx.from_numpy_matrix(adj_mat_1, create_using=nx.DiGraph())
+    g2 = nx.from_numpy_matrix(adj_mat_2, create_using=nx.DiGraph())
+
+    return nx.is_isomorphic(g1, g2)
+
+
 def adj_matrix_to_edge_list(adj_matrix, directed=True, first_id=0, weighted=False):
     num_nodes = adj_matrix.shape[0]
 
