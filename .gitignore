@@ -114,5 +114,8 @@ datasets/*
 # Pycharm
 .idea
 
+# Tensorflow
+/log
+
 
 *./png
