@@ -91,12 +91,15 @@ def train(num_nodes, batch_size, num_iter=10000, learning_rate=0.01, directed=Fa
         loss.backward()
         optimiser.step()
 
+        # todo: Add evaluation metrics like distance to -ve and distance to -ve
+
         running_loss += loss.item()
         if i % log_every == log_every - 1:
             print(f"Current iteration: {i + 1}\n Loss {running_loss / log_every}\n")
             counter.append(i)
             loss_history.append(running_loss)
             running_loss = 0.0
+            # todo: Incorporate summary saving to a file for tensorboard visualisation
     # show_plot(counter, loss_history)
 
     # # Add the loss and accuracy values as a scalar to summary.
@@ -109,7 +112,7 @@ def train(num_nodes, batch_size, num_iter=10000, learning_rate=0.01, directed=Fa
     return counter, loss_history
 
 if __name__ == '__main__':
-    # Hyperparameters todo: add argparse functionality
+    # Hyperparameters
     num_nodes = 40
     batch_size = 40  # Must be divisible by 4
 
