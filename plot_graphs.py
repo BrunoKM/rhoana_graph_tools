@@ -5,23 +5,6 @@ import plotly
 import matplotlib.pyplot as plt
 from utils import gaussian_function
 
-# Note that if the title is descriptive enough, it is unnecessary to include
-# axis labels; they are self-evident, in this plot's case.
-# plt.text(1995, 93, "Percentage of Bachelor's degrees conferred to women in the U.S.A."
-#                    ", by major (1970-2012)", fontsize=17, ha="center")
-#
-# # Always include your data source(s) and copyright notice! And for your
-# # data sources, tell your viewers exactly where the data came from,
-# # preferably with a direct link to the data. Just telling your viewers
-# # that you used data from the "U.S. Census Bureau" is completely useless:
-# # the U.S. Census Bureau provides all kinds of data, so how are your
-# # viewers supposed to know which data set you used?
-# plt.text(1966, -8, "Data source: nces.ed.gov/programs/digest/2013menu_tables.asp"
-#                    "\nAuthor: Randy Olson (randalolson.com / @randal_olson)"
-#                    "\nNote: Some majors are missing because the historical data "
-#                    "is not available for them", fontsize=10)
-
-
 
 def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
     adj_matrix, coord, coord_idxs, distances = random_gaussian_preferential_by_dist(num_nodes, gauss_std, gauss_height)
@@ -77,11 +60,6 @@ def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
     # the axis ticks. Make sure that the lines are light and small so they
     # don't obscure the primary data lines.
     ax.grid(color='b', linestyle='--', linewidth=0.5, alpha=0.2)
-    # for y in range(0.1, 1, 0.1):
-    #     plt.plot(range(0, 1, 0.01), [y] * len(range(0, 1, 0.01)), "--", lw=0.5, color="black", alpha=0.18)
-    # for x in range(0.1, 1, 0.1):
-    #     plt.plot(range(0, 1, 0.01), [y] * len(range(0, 1, 0.01)), "--", lw=0.5, color="black", alpha=0.18)
-    # todo: remove
     # Remove the tick marks; they are unnecessary with the tick lines we just plotted.
     plt.tick_params(axis="both", which="both", bottom="off", top="off",
                     labelbottom="on", left="off", right="off", labelleft="on")
@@ -107,7 +85,7 @@ def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
     plt.show()
 
 
-    # Now plot the distance edge histogram
+    # Plot the distance edge histogram
     dist_array = np.ravel(distances)[np.ravel(adj_matrix != 0)]
     histogram, bins = np.histogram(dist_array, bins=60, range=[0.001, 1.001], density=True)
     histogram_norm = histogram / np.max(histogram)
