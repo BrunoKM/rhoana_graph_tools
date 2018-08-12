@@ -108,3 +108,4 @@ def plot_preferential_by_distance(num_nodes, gauss_std, gauss_height):
 if __name__ == '__main__':
     # plot_preferential_by_distance(200, 0.125, 1)
     plot_preferential_by_distance(1000, 0.07, 1)
+

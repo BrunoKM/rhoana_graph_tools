@@ -315,7 +315,7 @@ def calc_distance_between_points(coord1, coord2):
     :return: np.ndarray matrix with shape [num_points1, num_points2] with entries in position [i, j] being the
     Euclidean distance between i-th point of coord1 and j-th point of coord2
     """
-    # Calculate the displacement vectors between each pair of points
+    # Calculate a matrix of displacement vectors between each pair of points
     disp_vecs= np.expand_dims(coord1, axis=1) - np.expand_dims(coord2, axis=0)
     distance = np.sqrt(np.sum(np.square(disp_vecs), axis=-1))  # Compute the Euclidean distance: sqrt(x**2, y**2, ..)
     return distance

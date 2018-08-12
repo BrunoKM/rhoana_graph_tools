@@ -125,3 +125,34 @@ def generate_batch(batch_size, num_nodes, directed=False):
             i += 1
 
     return batch_input_1, batch_input_2, labels
+
+
+def generate_example(num_nodes, directed=False, only_negative=True):
+    label = np.ndarray(shape=(1,), dtype=np.float32)
+
+    # Generate two random graphs
+    adj_mat_1 = np.random.randint(0, 2, size=[num_nodes] * 2)
+    adj_mat_2 = np.random.randint(0, 2, size=[num_nodes] * 2)
+    # Ensure the diagonal is zero
+    adj_mat_1 -= adj_mat_1 * np.eye(num_nodes, dtype=adj_mat_1.dtype)
+    adj_mat_2 -= adj_mat_2 * np.eye(num_nodes, dtype=adj_mat_2.dtype)
+    if not directed:
+        adj_mat_1[np.tril_indices(num_nodes)] = adj_mat_1.T[np.tril_indices(num_nodes)]
+        adj_mat_2[np.tril_indices(num_nodes)] = adj_mat_2.T[np.tril_indices(num_nodes)]
+
+    # Check whether the two graphs are isomorphic
+    isomorphic = is_isomorphic_from_adj(adj_mat_1, adj_mat_2)
+    if isomorphic and only_negative:
+        # If isomorphic, use the following sophisticated method to make them not isomorphic
+        idx_to_change = [np.random.randint(0, num_nodes), np.random.randint(0, num_nodes - 1)]
+        idx_to_change[1] += 1 if idx_to_change[1] == idx_to_change[0] else 0  # Ensures index is off diagonal
+        idx_to_change = tuple(idx_to_change)
+        adj_mat_2[idx_to_change] = not adj_mat_2[idx_to_change]
+        # If undirected, symmetry has to be maintained
+        if not directed:
+            idx_complement = (idx_to_change[1], idx_to_change[0])
+            adj_mat_2[idx_complement] = not adj_mat_2[idx_complement]
+        isomorphic = False
+
+    label[0] = int(isomorphic)
+    return adj_mat_1.astype(np.float32), adj_mat_2.astype(np.float32), label
