@@ -1,0 +1,10 @@
+plotly==2.7.0
+torch==0.4.1
+pandas==0.22.0
+h5py==2.8.0
+matplotlib==2.1.2
+networkx==2.1
+numpy==1.15.0
+scipy==1.1.0
+sympy==1.2
+tensorboardX==1.4
