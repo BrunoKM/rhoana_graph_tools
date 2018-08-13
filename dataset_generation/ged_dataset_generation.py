@@ -3,15 +3,32 @@ import networkx as nx
 import itertools
 import h5py
 import time
+import math
 
-from context import *
-from utils.graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj, graph_edit_distance_from_adj
+import context
+from utils.graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj, ged_from_adj, ged_from_adj_ged4py
 from sympy.utilities.iterables import multiset_permutations
 
 
-def generate_ged(save_path, num_nodes, total_examples, total_graphs, ged_function, split=(0.7, 0.1, 0.2), directed=False):
+def generate_ged_exact(save_path, num_nodes, total_examples, total_graphs,
+                       ged_function, split=(0.7, 0.1, 0.2), directed=False):
     """
     Generate the graph edit distance (ged) dataset.
+
+    Generates a set of distinct graphs and partitions into traing, validation and test sets.
+    Then, for each set create examples by taking two random graphs from the set and calculating the exact
+    graph edit distance between them using the ged_function provided as a parameter.
+
+    :param save_path: File path to where to save the dataset
+    :param num_nodes: int Number of nodes/vertices of each graph
+    :param total_examples: int Total number of examples (training, validation and test)
+    :param total_graphs: int Total number of unique graphs to use to generate exampoles
+    :param ged_function: Function that takes two adjacency matrices and
+    calculates graph edit distance between them
+    :param split: tuple with with float elements dictating how to split the dataset
+    into train, validation and test
+    :param directed: whether the graphs should be directed or not
+    :return: None
     """
     num_train_graphs, num_val_graphs, num_test_graphs = map(lambda x: int(x * total_graphs), split)
     examples_per_set = list(map(lambda x: int(x * total_examples), split))
@@ -54,9 +71,10 @@ def generate_ged(save_path, num_nodes, total_examples, total_graphs, ged_functio
             elapsed_time += time_for_example
             avg_time = elapsed_time / (i + 1)
 
-            print(f"Set: {set_name}. GED examples generated: {i} / {num_examples}."
-                  f"Time for example {time.time() - start_time}.\n"
-                  f"Avg time per example: avg_time | ETA: {avg_time * (num_examples - i)}")
+            print(f"Set: {set_name}. GED examples generated: {i} / {num_examples}. "
+                  f"Time for example {time.time() - start_time:4f}s | "
+                  f"Avg time per example: {avg_time:4f}s | "
+                  f"ETA: {math.floor(avg_time * (num_examples - i) / 60)} min")
 
     print('Dataset generated')
     hdf5_file.close()
@@ -119,7 +137,7 @@ def generate_graph_class_list(num_nodes, num_graphs, directed=False, dtype=np.fl
     return graph_list
 
 
-def random_graph(num_nodes, directed=False, dtype=np.float64):
+def random_graph(num_nodes, directed=False, dtype=np.int32):
     adj_mat = np.random.randint(0, 2, size=[num_nodes] * 2, dtype=dtype)
     # Ensure the diagonal is zero
     adj_mat -= adj_mat * np.eye(num_nodes, dtype=adj_mat.dtype)
@@ -175,8 +193,8 @@ def generate_batch(batch_size, num_nodes, directed=False):
 if __name__ == '__main__':
     ged_dataset_path = '../datasets/ged_dataset.h5'
 
-    num_nodes = 8
-    num_examples = 10000
+    num_nodes = 10
+    num_examples = 50000
     num_graphs = 2000
 
-    generate_ged(ged_dataset_path, num_nodes, num_examples, num_graphs, graph_edit_distance_from_adj)
+    generate_ged_exact(ged_dataset_path, num_nodes, num_examples, num_graphs, ged_from_adj_ged4py)
