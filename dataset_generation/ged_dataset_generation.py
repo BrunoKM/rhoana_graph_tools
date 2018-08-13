@@ -33,6 +33,9 @@ def generate_ged(save_path, num_nodes, total_examples, total_graphs, ged_functio
         hdf5_file.create_dataset(set_name + '_labels', [num_examples], np.float64)
 
         num_graphs = len(graphs)
+
+        elapsed_time = 0.
+        avg_time = 0.
         for i in range(num_examples):
             start_time = time.time()
 
@@ -46,8 +49,15 @@ def generate_ged(save_path, num_nodes, total_examples, total_graphs, ged_functio
             hdf5_file[set_name + '_graph2'][i, ...] = graph2
             hdf5_file[set_name + '_labels'][i] = distance
 
-            print(f"\rSet: {set_name}. GED examples generated: {i} / {num_examples}."
-                  f"Time for example {time.time() - start_time}", end='')
+            # Log the time taken
+            time_for_example = time.time() - start_time
+            elapsed_time += time_for_example
+            avg_time = elapsed_time / (i + 1)
+
+            print(f"Set: {set_name}. GED examples generated: {i} / {num_examples}."
+                  f"Time for example {time.time() - start_time}.\n"
+                  f"Avg time per example: avg_time | ETA: {avg_time * (num_examples - i)}")
+
     print('Dataset generated')
     hdf5_file.close()
     return
@@ -166,7 +176,7 @@ if __name__ == '__main__':
     ged_dataset_path = '../datasets/ged_dataset.h5'
 
     num_nodes = 8
-    num_examples = 50000
+    num_examples = 10000
     num_graphs = 2000
 
     generate_ged(ged_dataset_path, num_nodes, num_examples, num_graphs, graph_edit_distance_from_adj)
