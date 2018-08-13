@@ -4,7 +4,8 @@ import itertools
 import h5py
 import time
 
-from graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj, graph_edit_distance_from_adj
+from .context import *
+from utils.graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj, graph_edit_distance_from_adj
 from sympy.utilities.iterables import multiset_permutations
 
 
