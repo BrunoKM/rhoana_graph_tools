@@ -7,10 +7,10 @@ import torch.nn.functional as F
 
 from torch.nn.functional import pairwise_distance
 from tensorboardX import SummaryWriter
-from .iso_nn_data_util import generate_batch
-from .iso_nn_data_util import generate_example
-from .models import SiameseNetwork, ContrastiveLoss
-from .embedding_models import GCN
+from iso_nn_data_util import generate_batch
+from iso_nn_data_util import generate_example
+from models import SiameseNetwork, ContrastiveLoss
+from embedding_models import GCN
 
 
 def initialise_log_dir(aggregate_log_dir='./log'):

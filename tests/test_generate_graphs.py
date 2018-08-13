@@ -1,4 +1,4 @@
-from .context import *
+from context import *
 from graph_generation import *
 
 

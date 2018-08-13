@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools
 
-from .context import *
+from context import *
 
 from utils import *
 

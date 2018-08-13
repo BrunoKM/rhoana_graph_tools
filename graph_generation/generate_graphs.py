@@ -5,7 +5,7 @@ import itertools
 import math
 import time
 
-from .context import *
+from context import *
 
 from utils import graph_utils
 

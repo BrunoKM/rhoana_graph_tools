@@ -3,7 +3,7 @@ from sympy.utilities.iterables import multiset_permutations
 import networkx as nx
 import itertools
 
-from .context import *
+from context import *
 from utils.graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj
 
 

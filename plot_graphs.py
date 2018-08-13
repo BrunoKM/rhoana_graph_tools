@@ -1,5 +1,5 @@
-from generate_graphs import *
-from graph_utils import rearrange_adj_matrix
+from graph_generation.generate_graphs import *
+from utils.graph_utils import rearrange_adj_matrix
 import itertools
 import plotly
 import matplotlib.pyplot as plt
