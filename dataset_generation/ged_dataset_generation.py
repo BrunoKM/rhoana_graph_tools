@@ -27,8 +27,8 @@ def generate_ged(save_path, num_nodes, total_examples, total_graphs, ged_functio
 
     for set_name, graphs, num_examples in zip(set_names, graphs_sets, examples_per_set):
 
-        hdf5_file.create_dataset(set_name + '_graph1', [num_nodes] * 2, np.int8)
-        hdf5_file.create_dataset(set_name + '_graph2', [num_nodes] * 2, np.int8)
+        hdf5_file.create_dataset(set_name + '_graph1', [num_examples, num_nodes, num_nodes], np.int8)
+        hdf5_file.create_dataset(set_name + '_graph2', [num_examples, num_nodes, num_nodes], np.int8)
         hdf5_file.create_dataset(set_name + '_labels', [num_examples], np.float64)
 
         num_graphs = len(graphs)
@@ -99,7 +99,7 @@ def generate_graph_class_list(num_nodes, num_graphs, directed=False, dtype=np.fl
                 i += 1
         print(f"\rGenerated unique graphs: {i} / {num_graphs}", end='')
 
-    print("\nUnique graphs generated.")
+    print("\nUnique graphs generated.\n")
     # Construct the graph list from the dictionary
     graph_list = []
     for deg_graph_list in graph_dict.values():
@@ -164,7 +164,7 @@ def generate_batch(batch_size, num_nodes, directed=False):
 if __name__ == '__main__':
     ged_dataset_path = '../datasets/ged_dataset.h5'
 
-    num_nodes = 15
+    num_nodes = 8
     num_examples = 50000
     num_graphs = 2000
 
