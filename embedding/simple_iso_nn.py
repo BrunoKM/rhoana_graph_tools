@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.nn.functional import pairwise_distance
 from tensorboardX import SummaryWriter
 
-from iso_nn_data_util import generate_batch
+from .iso_nn_data_util import generate_batch
 
 
 random_seed = 0

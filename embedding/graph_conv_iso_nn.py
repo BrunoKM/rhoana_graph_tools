@@ -5,12 +5,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from iso_nn_data_util import generate_batch
-from iso_nn_data_util import generate_example
 from torch.nn.functional import pairwise_distance
 from tensorboardX import SummaryWriter
-from models import SiameseNetwork, ContrastiveLoss
-from embedding_models import GCN
+from .iso_nn_data_util import generate_batch
+from .iso_nn_data_util import generate_example
+from .models import SiameseNetwork, ContrastiveLoss
+from .embedding_models import GCN
 
 
 def initialise_log_dir(aggregate_log_dir='./log'):

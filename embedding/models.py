@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from embedding_models import GCN
+from .embedding_models import GCN
 
 
 class SiameseNetwork(nn.Module):

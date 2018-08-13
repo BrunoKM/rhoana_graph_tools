@@ -1,7 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
-from graph_utils import *
+
+from .context import *
+
+from utils import *
 
 
 def test_rand_permute_adj_matrix():
@@ -14,8 +17,8 @@ def test_rand_permute_adj_matrix():
         for _ in range(tests_per_nodes):
             adj_mat = np.random.randint(0, 2, size=[num_nodes] * 2)
             adj_mat -= adj_mat * np.eye(num_nodes, dtype=adj_mat.dtype)  # Make sure diagonal entries zero
-            adj_mat_perm = graph_utils.rand_permute_adj_matrix(adj_mat)
-            assert graph_utils.is_isomorphic_from_adj(adj_mat, adj_mat_perm)
+            adj_mat_perm = rand_permute_adj_matrix(adj_mat)
+            assert is_isomorphic_from_adj(adj_mat, adj_mat_perm)
     return
 
 

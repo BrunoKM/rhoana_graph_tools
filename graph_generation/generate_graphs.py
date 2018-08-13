@@ -1,10 +1,13 @@
 import networkx as nx
 import numpy as np
-import graph_utils
 import utils
 import itertools
 import math
 import time
+
+from .context import *
+
+from utils import graph_utils
 
 
 def random_with_min_motif_freq(motif, min_freq, num_nodes, connectivity=None, shuffle_on_connecting=True):

@@ -1,4 +1,5 @@
-from generate_graphs import *
+from .context import *
+from graph_generation import *
 
 
 def test_random_with_min_motif_freq():

@@ -3,7 +3,8 @@ from sympy.utilities.iterables import multiset_permutations
 import networkx as nx
 import itertools
 
-from graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj
+from .context import *
+from utils.graph_utils import rand_permute_adj_matrix, is_isomorphic_from_adj
 
 
 def generate_automorphism_dict(num_nodes, edges_range, directed=False, dtype=np.float64):
