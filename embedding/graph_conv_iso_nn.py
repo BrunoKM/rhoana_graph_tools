@@ -57,11 +57,14 @@ def accuracy_metrics_classification(distance, label, batch_size):
 
 
 def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_rate=0.1, aggregate_log_dir='./log'):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     # Initiate the TensorBoard logging pipeline
     log_dir = initialise_log_dir(aggregate_log_dir)
     writer = SummaryWriter(log_dir)
 
     net = SiameseNetwork(1, embed_size)
+    net.to(device)
     criterion = nn.MSELoss()
     optimiser = optim.Adam(net.parameters(), lr=learning_rate)
 
@@ -82,6 +85,8 @@ def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_
             # graph1_batch, graph2_batch, label_batch = torch.from_numpy(graph1_batch),\
             #                                           torch.from_numpy(graph2_batch),\
             #                                           torch.from_numpy(label_batch)
+            graph1_batch, graph2_batch, label_batch = map(lambda x: x.to(device),
+                                                          [graph1_batch, graph2_batch, label_batch])
 
             # Compute the embeddings
             output1, output2 = net(graph1_batch, graph2_batch)
