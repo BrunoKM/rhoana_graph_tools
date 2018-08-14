@@ -65,6 +65,8 @@ def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_
 
     net = SiameseNetwork(1, embed_size)
     net.to(device)
+    net.train()
+
     criterion = nn.MSELoss()
     optimiser = optim.Adam(net.parameters(), lr=learning_rate)
 
@@ -117,15 +119,52 @@ def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_
     writer.close()
     # show_plot(counter, loss_history)
 
-    return counter, loss_history
+    return net, counter, loss_history
+
+
+def eval(net, batch_size=1):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    net.to(device)
+    net.eval()
+
+    criterion = nn.MSELoss()
+
+    dataset = GEDDataset(path_to_dataset, which_set='val', adj_dtype=np.float32, transform=None)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1)
+
+    total_loss = 0.0
+
+    num_batches = 0
+    for i_batch, sample_batched in enumerate(dataloader):
+        graph1_batch, graph2_batch, label_batch = sample_batched['graph1'], \
+                                                  sample_batched['graph2'], \
+                                                  sample_batched['label']
+        graph1_batch, graph2_batch, label_batch = map(lambda x: x.to(device),
+                                                      [graph1_batch, graph2_batch, label_batch])
+
+        # Compute the embeddings
+        output1, output2 = net(graph1_batch, graph2_batch)
+        # Compute the distance between the embeddings
+        distance = pairwise_distance(output1, output2)
+
+        loss = criterion(distance, label_batch)
+        total_loss += loss
+        num_batches += 1
+
+    avg_loss = total_loss / num_batches
+    return avg_loss
+
 
 if __name__ == '__main__':
     path_to_dataset = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/ged_dataset.h5'))
 
     # Hyperparameters
-    batch_size = 8
+    batch_size = 16
     embed_size = 10
     num_epochs = 10
     learning_rate = 0.0001
 
-    train(path_to_dataset, batch_size, embed_size, num_epochs, learning_rate)
+    net, _ = train(path_to_dataset, batch_size, embed_size, num_epochs, learning_rate)
+
+    avg_loss = eval(net, batch_size=1)
