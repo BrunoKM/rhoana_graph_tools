@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,6 +21,10 @@ from dataset_util import GEDDataset, ToTensor
 
 def initialise_log_dir(aggregate_log_dir='./log'):
     """Initialises a new directory for the run and returns its path"""
+    # Create the logging directory if it doesn't exist
+    if not os.path.exists(aggregate_log_dir):
+        os.makedirs(aggregate_log_dir)
+
     dirs = os.listdir(aggregate_log_dir)
     previous_runs = list(filter(lambda d: d.startswith('run_'), dirs))
     if len(previous_runs) == 0:
@@ -51,7 +56,7 @@ def accuracy_metrics_classification(distance, label, batch_size):
 #     return intraclass_distance, interclass_distance
 
 
-def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_rate=0.1, directed=False, aggregate_log_dir='./log'):
+def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_rate=0.1, aggregate_log_dir='./log'):
     # Initiate the TensorBoard logging pipeline
     log_dir = initialise_log_dir(aggregate_log_dir)
     writer = SummaryWriter(log_dir)
@@ -65,8 +70,8 @@ def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_
     running_loss = 0.0
     log_every = 100
 
-    dataset = GEDDataset(path_to_dataset, which_set='train', adj_dtype=np.float32, transform=ToTensor)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    dataset = GEDDataset(path_to_dataset, which_set='train', adj_dtype=np.float32, transform=None)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 
     i = 0
     for epoch in range(0, num_epochs):
@@ -110,8 +115,12 @@ def train(path_to_dataset, batch_size=8, embed_size=10, num_epochs=10, learning_
     return counter, loss_history
 
 if __name__ == '__main__':
-    # Hyperparameters
-    num_nodes = 10
-    batch_size = 30  # Must be divisible by 4
+    path_to_dataset = os.path.abspath(os.path.join(os.path.dirname(__file__), '../datasets/ged_dataset.h5'))
 
-    train(num_nodes, batch_size)
+    # Hyperparameters
+    batch_size = 8
+    embed_size = 10
+    num_epochs = 10
+    learning_rate = 0.0001
+
+    train(path_to_dataset, batch_size, embed_size, num_epochs, learning_rate)

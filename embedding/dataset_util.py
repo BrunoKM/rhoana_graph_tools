@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import h5py
+import numpy as np
 
 
 from torch.utils.data import DataLoader, Dataset
@@ -18,6 +19,11 @@ class GEDDataset(Dataset):
         assert which_set.lower() in ['train', 'val', 'test']
         self.which_set = which_set.lower()
         self.adj_dtype = adj_dtype
+        self.transform = transform
+
+    def __del__(self):
+        if hasattr(self, 'h5_file'):
+            self.h5_file.close()
 
     def __len__(self):
         return len(self.h5_file[self.which_set + '_labels'])
@@ -29,6 +35,7 @@ class GEDDataset(Dataset):
 
         graph1 = graph1.astype(self.adj_dtype)
         graph2 = graph2.astype(self.adj_dtype)
+        label = label.astype(np.float32)
 
         sample = {'graph1': graph1, 'graph2': graph2, 'label': label}
 
