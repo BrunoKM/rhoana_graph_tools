@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -26,8 +27,8 @@ class GraphConvolution(nn.Module):
             self.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, x, adj):
-        support = torch.mm(x, self.weight)
-        output = torch.spmm(adj, support)
+        support = torch.matmul(x, self.weight)
+        output = torch.matmul(adj, support)
         if self.bias is not None:
             return output + self.bias
         else:

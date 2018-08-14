@@ -12,7 +12,8 @@ class SiameseNetwork(nn.Module):
         self.sister_net = sister_net(num_features, embed_size)
 
     def forward_single(self, adj):
-        x = torch.sum(adj, dim=1, keepdim=True)
+        # Just use node degrees as features
+        x = torch.sum(adj, dim=-1, keepdim=True)
         return self.sister_net.forward(x, adj)
 
     def forward(self, input1, input2):
@@ -37,5 +38,6 @@ class ContrastiveLoss(nn.Module):
 
     def forward(self, distance, label):
         contrastive_loss = torch.mean((1 - self.pos_weight) * label * torch.pow(distance, 2) +
-                                      self.pos_weight * (1 - label) * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2))
+                                      self.pos_weight * (1 - label) *
+                                      torch.pow(torch.clamp(self.margin - distance, min=0.0), 2))
         return contrastive_loss

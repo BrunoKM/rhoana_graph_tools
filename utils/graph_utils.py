@@ -1,6 +1,10 @@
 import numpy as np
 import networkx as nx
 
+if __name__ == '__main__':
+    from ged4py.algorithm import graph_edit_dist
+else:
+    from .ged4py.algorithm import graph_edit_dist
 
 def rearrange_adj_matrix(matrix, ordering):
     assert matrix.ndim == 2
@@ -26,14 +30,25 @@ def rand_permute_adj_matrix(matrix):
     return matrix_permuted
 
 
-def graph_edit_distance_from_adj(adj_mat_1, adj_mat_2, directed=False):
+def ged_from_adj(adj_mat_1, adj_mat_2, directed=False, ged_function=graph_edit_dist.compare):
+    """Calculate the graph edit distance between two graphs"""
     if directed:
         create_using = nx.DiGraph
     else:
         create_using = nx.Graph
     g1 = nx.from_numpy_matrix(adj_mat_1, create_using=create_using())
     g2 = nx.from_numpy_matrix(adj_mat_2, create_using=create_using())
-    return nx.graph_edit_distance(g1, g2)
+    return ged_function(g1, g2)
+
+
+def ged_from_adj_nx(adj_mat_1, adj_mat_2, directed=False):
+    """Calculate the graph edit distance between two graphs using the networkx implementation"""
+    return ged_from_adj(adj_mat_1, adj_mat_2, directed=directed, ged_function=nx.graph_edit_distance)
+
+
+def ged_from_adj_ged4py(adj_mat_1, adj_mat_2, directed=False):
+    """Calculate the graph edit distance between two graphs using the ged4py implementation"""
+    return ged_from_adj(adj_mat_1, adj_mat_2, directed=directed, ged_function=graph_edit_dist.compare)
 
 
 def is_isomorphic_from_adj(adj_mat_1, adj_mat_2):
