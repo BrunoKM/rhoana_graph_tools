@@ -68,15 +68,15 @@ def main():
 
     model = SiameseNetwork(1, args.embedding_size)
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # If a checkpoint provided, load it's values
     if args.checkpoint:
-        state = torch.load(args.checkpoint)
+        state = torch.load(args.checkpoint, map_location=device)
         model.load_state_dict(state['state_dict'])
     else:
         state = None
 
     # Run the model on a GPU if available
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
 
@@ -142,6 +142,7 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
 
     i = 0
     for epoch in range(0, num_epochs):
+        start_time = time.time()
         for i_batch, sample_batched in enumerate(dataloader):
             graph1_batch, graph2_batch, label_batch = sample_batched['graph1'],\
                                                       sample_batched['graph2'],\
@@ -174,6 +175,7 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
                 running_loss = 0.0
                 running_l1 = 0.0
             i += 1
+        print(f"Completed epoch {epoch}. Time taken: {time.time() - start_time:1f} seconds\n")
 
     writer.close()
     return model, optimiser, epoch
@@ -226,7 +228,7 @@ def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
     avg_l1 = total_l1 / num_batches
     avg_l2 = total_l2 / num_batches
 
-    print(f"Evaluation results:\n\tMean Square Error: {avg_l1:8f} | Mean Absolute Error: {avg_l2:8f}"
+    print(f"Evaluation results:\n\tMean Square Error: {avg_l2:8f} | Mean Absolute Error: {avg_l1:8f}"
           f"\n\tTime taken: {time.time() - start_time:1f}s for {len(dataset)} examples")
     if store_results:
         return all_labels, all_predictions
