@@ -288,13 +288,12 @@ def plot_prediction(predictions, labels, plots_dir='../plots'):
     plt.xlim(xmin=0., xmax=x_max)
     plt.ylim(ymin=0., ymax=y_max)
 
-    plt.scatter(predictions, labels, color='#40ddbe', alpha=0.1)
     # Plot the desired results (a straight y = x line)
     x = np.linspace(0., x_max, 1000)
-    plt.plot(x, x, color='#3572b7')
+    plt.plot(x, x, color='#3572b7', alpha=0.8)
 
-    print(labels, predictions)
-    plt.scatter(labels, predictions, s=1, color='#40ddbe', alpha=1.0)
+    # Plot the predictions
+    plt.scatter(labels, predictions, s=3, color='#40ddbe', alpha=0.3)
 
     plt.xlabel("Actual Distance Value")
     plt.ylabel("Predicted Distance Value")
