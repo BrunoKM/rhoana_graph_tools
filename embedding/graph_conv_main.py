@@ -81,17 +81,17 @@ def main():
     if args.mode == 'train':
         dataset = GEDDataset(args.data, which_set='train', adj_dtype=np.float32, transform=None)
         train(model, dataset, batch_size=args.batch_size, embed_size=args.embedding_size, num_epochs=args.epochs,
-              learning_rate=args.learning_rate, save_to=args.save_dir, resume_state=args.checkpoint)
+              learning_rate=args.learning_rate, save_to=args.save_dir, resume_state=args.checkpoint, device=device)
 
     # Whether to store the predictions from eval for plotting
     store_res = args.plot_predicitons
 
     if args.mode == 'eval':
         dataset = GEDDataset(path_to_dataset, which_set=args.which_set, adj_dtype=np.float32, transform=None)
-        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res)
+        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res, device=device)
     if args.post_training_eval:
         dataset = GEDDataset(path_to_dataset, which_set='val', adj_dtype=np.float32, transform=None)
-        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res)
+        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res, device=device)
 
     # Finally, if plotting the results:
     if args.plot_predicitons:
@@ -104,7 +104,7 @@ def main():
 
 
 def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_rate=0.1, save_to=None,
-          aggregate_log_dir='./log', resume_state=None):
+          aggregate_log_dir='./log', resume_state=None, device="cpu"):
     """Function for training a model"""
     print(f"\t>  Running the evaluation on the {dataset.which_set} dataset.")
     model.train()
@@ -134,8 +134,8 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
             graph1_batch, graph2_batch, label_batch = sample_batched['graph1'],\
                                                       sample_batched['graph2'],\
                                                       sample_batched['label']
-            # graph1_batch, graph2_batch, label_batch = map(lambda x: x.to(device),
-            #                                               [graph1_batch, graph2_batch, label_batch])
+            graph1_batch, graph2_batch, label_batch = map(lambda x: x.to(device),
+                                                          [graph1_batch, graph2_batch, label_batch])
 
             # Compute the embeddings
             output1, output2 = model(graph1_batch, graph2_batch)
@@ -177,7 +177,7 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
     return model, optimiser, epoch
 
 
-def eval(model, dataset, batch_size=8, store_results=False):
+def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
     print(f"\t>  Running the evaluation on the {dataset.which_set} dataset.")
     model.eval()
 
