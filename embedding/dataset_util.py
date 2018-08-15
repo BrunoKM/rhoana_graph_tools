@@ -15,6 +15,7 @@ class GEDDataset(Dataset):
         """
 
         """
+        # todo: Implement a different fileformat/loading method as h5py does not allow for multiple workers
         self.h5_file = h5py.File(h5_file, mode="r")
         assert which_set.lower() in ['train', 'val', 'test']
         self.which_set = which_set.lower()

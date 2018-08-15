@@ -26,7 +26,9 @@ from dataset_util import GEDDataset, ToTensor
 
 train_example_command='python3 graph_conv_main.py -m train --epochs 10 ' \
                       '--batch_size 8 --save_dir saves/graph_conv_std ../datasets/ged_dataset.h5'
-eval_example_command='python3 graph_conv_main.py -m eval --which_set val --epochs 10 --batch_size 8 --checkpoint saves/graph_conv_std --plot_predictions True ../datasets/ged_dataset.h5'
+eval_example_command='python3 graph_conv_main.py -m eval --which_set val --batch_size 8 ' \
+                     '--checkpoint saves/graph_conv_std/checkpoint.pth.tar ' \
+                     '--plot_predictions ../datasets/ged_dataset.h5'
 
 parser = argparse.ArgumentParser(description='Graph Convolution Network for GED prediction Training.\n\n'
                                              'Example Command Training:\n' + train_example_command +
@@ -54,8 +56,9 @@ parser.add_argument('--print_freq', '-p', default=10, type=int,
                     metavar='N', help='print frequency')
 parser.add_argument('--post_training_eval', default=True, type=bool, metavar='BOOL',
                     help='Whether to run an evaluation on the validation set after training is complete.')
-parser.add_argument('--plot_predictions', dest='plot_predictions', default=False, action='store_true',
+parser.add_argument('--plot_predictions', dest='make_plot', action='store_true',
                     help='Whether to make the prediction plot. The data must have been evaluated for that purpose.')
+parser.set_defaults(make_plot=False)
 
 
 def main():
@@ -80,33 +83,42 @@ def main():
     # Train the network
     if args.mode == 'train':
         dataset = GEDDataset(args.data, which_set='train', adj_dtype=np.float32, transform=None)
-        train(model, dataset, batch_size=args.batch_size, embed_size=args.embedding_size, num_epochs=args.epochs,
+        model, optimiser, epoch = train(model, dataset, batch_size=args.batch_size, embed_size=args.embedding_size, num_epochs=args.epochs,
               learning_rate=args.learning_rate, save_to=args.save_dir, resume_state=args.checkpoint, device=device)
 
-    # Whether to store the predictions from eval for plotting
-    store_res = args.plot_predicitons
+    if args.save_dir:
+        # Save the model checkpoint
+        state = {
+            'epoch': epoch,
+            'state_dict': model.state_dict(),
+            'optimiser': optimiser.state_dict(),
+        }
+        save_checkpoint(state, args.save_dir)
 
-    if args.mode == 'eval':
-        dataset = GEDDataset(path_to_dataset, which_set=args.which_set, adj_dtype=np.float32, transform=None)
-        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res, device=device)
-    if args.post_training_eval:
-        dataset = GEDDataset(path_to_dataset, which_set='val', adj_dtype=np.float32, transform=None)
-        *_, results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res, device=device)
+    # Whether to store the predictions from eval for plotting
+    store_res = args.make_plot
+
+    if args.mode == 'train' and args.post_training_eval:
+        args.which_set = 'val'
+    if args.mode == 'eval' or args.post_training_eval:
+        dataset = GEDDataset(args.data, which_set=args.which_set, adj_dtype=np.float32, transform=None)
+        results = eval(model, dataset, batch_size=args.batch_size, store_results=store_res, device=device)
 
     # Finally, if plotting the results:
-    if args.plot_predicitons:
+    if args.make_plot:
         # Assert that the data has been evaluated
         if not (args.mode == 'eval' or args.post_training_eval):
             raise AttributeError('The flags provided did not specify to evaluate the dataset, which is required for'
                                  'plotting')
-
-
+        # Make a plot of the results
+        print('Making the plot')
+        plot_prediction(results[0], results[1])
 
 
 def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_rate=0.1, save_to=None,
           aggregate_log_dir='./log', resume_state=None, device="cpu"):
     """Function for training a model"""
-    print(f"\t>  Running the evaluation on the {dataset.which_set} dataset.")
+    print(f"\n\t>  Running the training.")
     model.train()
 
     # Initiate the TensorBoard logging pipeline
@@ -164,21 +176,11 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
             i += 1
 
     writer.close()
-
-    # Save the model checkpoint
-    if save_to:
-        state = {
-            'epoch': epoch,
-            'state_dict': model.state_dict(),
-            'optimiser': optimiser.state_dict(),
-        }
-        save_checkpoint()
-
     return model, optimiser, epoch
 
 
 def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
-    print(f"\t>  Running the evaluation on the {dataset.which_set} dataset.")
+    print(f"\n\t>  Running the evaluation on the {dataset.which_set} dataset.")
     model.eval()
 
     # Accuracy criteria:
@@ -194,7 +196,8 @@ def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
 
     if store_results:
         # Store the predictions and labels in an array
-        results = np.empty([len(dataset), 2], dtype=np.float32)
+        all_predictions = np.zeros([len(dataset)], dtype=np.float32)
+        all_labels = np.zeros([len(dataset)], dtype=np.float32)
 
     start_time = time.time()
     for i_batch, sample_batched in enumerate(dataloader):
@@ -217,18 +220,18 @@ def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
 
         if store_results:
             idx = i_batch * batch_size
-            results[idx:idx + batch_size, 0] = distance
-            results[idx:idx + batch_size, 1] = label_batch
+            all_predictions[idx:idx + batch_size] = distance.data.cpu().numpy()
+            all_labels[idx:idx + batch_size] = label_batch.data.cpu().numpy()
 
     avg_l1 = total_l1 / num_batches
     avg_l2 = total_l2 / num_batches
 
     print(f"Evaluation results:\n\tMean Square Error: {avg_l1:8f} | Mean Absolute Error: {avg_l2:8f}"
-          f"\n\tTime taken: {time.time() - start_time:4f}s for {len(dataset)} examples")
+          f"\n\tTime taken: {time.time() - start_time:1f}s for {len(dataset)} examples")
     if store_results:
-        return avg_l1, avg_l2, results
+        return all_labels, all_predictions
     else:
-        return avg_l1, avg_l2, None
+        return None
 
 
 def initialise_log_dir(aggregate_log_dir='./log', model_name=''):
@@ -253,7 +256,7 @@ def get_next_available_name(dir_path, startswith):
     if len(previous_runs) == 0:
         run_number = 1
     else:
-        run_number = max([int(s.split(startswith)[1]) for s in previous_runs]) + 1
+        run_number = max([int(os.path.splitext(s.split(startswith)[1])[0]) for s in previous_runs]) + 1
     path = startswith + str(run_number)
     return path
 
@@ -278,25 +281,28 @@ def accuracy_metrics_classification(distance, label, batch_size):
     return intraclass_distance, interclass_distance
 
 
-def plot_prediction(results, plots_dir='../plots'):
-    predictions = results[0, :]
-    labels = results[1, :]
+def plot_prediction(predictions, labels, plots_dir='../plots'):
 
     x_max = np.max(labels) * 1.05
+    y_max = np.max(predictions) * 1.05
     plt.xlim(xmin=0., xmax=x_max)
-    plt.ylim(ymin=0.)
+    plt.ylim(ymin=0., ymax=y_max)
 
-    plt.scatter(predictions, labels, color='#40ddbe', alpha=0.3)
+    plt.scatter(predictions, labels, color='#40ddbe', alpha=0.1)
     # Plot the desired results (a straight y = x line)
-    x =  np.linspace(0., x_max, 1000)
+    x = np.linspace(0., x_max, 1000)
     plt.plot(x, x, color='#3572b7')
+
+    print(labels, predictions)
+    plt.scatter(labels, predictions, s=1, color='#40ddbe', alpha=1.0)
 
     plt.xlabel("Actual Distance Value")
     plt.ylabel("Predicted Distance Value")
 
     if not os.path.exists(plots_dir):
         os.makedirs(plots_dir)
-    plt.savefig(get_next_available_name(plots_dir, 'pred_vs_label_'), bbox_inches='tight', dpi=200)
+    filename = os.path.join(plots_dir, get_next_available_name(plots_dir, 'pred_vs_label_') + '.png')
+    plt.savefig(filename, bbox_inches='tight', dpi=200)
     return
 
 
