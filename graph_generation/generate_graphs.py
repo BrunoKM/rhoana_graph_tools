@@ -358,7 +358,8 @@ def random_preferential_grid_pos_2d():
     are uniformly spaced on a 2d grid. Elegant solution using a 2d Gaussian kernel.
     :return:
     """
-    # todo: complete
+    # todo
+    # Probabilities can be computed by convolution with a 2D Gaussian kernel.
     pass
 
 
@@ -368,7 +369,7 @@ def random_preferential_grid_pos_3d():
     are uniformly spaced on a 3d grid.
     :return:
     """
-    # todo: complete
+    # todo
     pass
 
 
@@ -404,19 +405,5 @@ def random_with_second_order(num_nodes, p, a_recip, a_conv, a_div, a_chain):
 
 
 if __name__ == '__main__':
-    # motif = np.array([[0, 1, 1], [0, 0, 1], [0, 1, 0]])
-    # g = random_with_min_motif_freq(motif, 3, 10)
-    # g2 = random_weighted_with_min_motif_freq(motif, 3, 10, shuffle_on_connecting=True, motif_edge_std=1.2,
-    #                                          rand_edge_mean=30, rand_edge_std=1.4, discrete=False)
-    # print(np.sum(np.eye(g.shape[0]) * g), np.sum(np.eye(g2.shape[0]) * g2))
-    # print(g2)
-    # motif = np.array([[0, 1, 1, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 1, 1, 0]])
-    # g = random_with_min_motif_freq(motif, 23, 30)
-    # print(g)
-    # for size in [1000, 3000, 5000, 8000, 10000]:
-    #     start_time = time.time()
-    #     g = random_weighted_with_min_motif_freq(motif, int(size/2), size, shuffle_on_connecting=False, discrete=True)
-    #     print(f"Size: {size}, Time taken: {time.time() - start_time:.2f}s")
-    #     del g
     g = random_gaussian_preferential_by_dist(10000, 0.4, 1)
     print(g)

@@ -110,6 +110,7 @@ datasets/*
 
 # Plotting
 /graphs
+/plots
 
 # Pycharm
 .idea
