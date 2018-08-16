@@ -25,7 +25,7 @@ from dataset_util import GEDDataset, ToTensor
 
 
 train_example_command='python3 graph_conv_main.py -m train --epochs 10 ' \
-                      '--batch_size 8 --save_dir saves/graph_conv_std ../datasets/ged_dataset.h5'
+                      '--batch_size 8 --save_dir saves/graph_conv_std --num_workers 8 ../datasets/ged_dataset.h5'
 eval_example_command='python3 graph_conv_main.py -m eval --which_set val --batch_size 8 ' \
                      '--checkpoint saves/graph_conv_std/checkpoint.pth.tar ' \
                      '--plot_predictions ../datasets/ged_dataset.h5'
@@ -52,6 +52,8 @@ parser.add_argument('-m', '--mode', dest='mode', default='train', type=str, choi
                     help='Whether to: train the network ("train") or evaluate it ("eval")')
 parser.add_argument('-s', '--which_set', dest='which_set', default='train', type=str, choices=['train', 'val', 'test'],
                     help='Whether to: train ("train"), evaluate on validation set ("val") or test set ("test")')
+parser.add_argument('--num_workers', default=4, type=int,
+                    metavar='N', help='Number of workers for loading batches.')
 parser.add_argument('--print_freq', '-p', default=10, type=int,
                     metavar='N', help='print frequency')
 parser.add_argument('--post_training_eval', default=True, type=bool, metavar='BOOL',
@@ -138,7 +140,7 @@ def train(model, dataset, batch_size=8, embed_size=10, num_epochs=10, learning_r
     running_l1 = 0.0
     log_every = 100
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=args.num_workers)
 
     i = 0
     for epoch in range(0, num_epochs):
@@ -189,7 +191,7 @@ def eval(model, dataset, batch_size=8, store_results=False, device="cpu"):
     l1_loss_op = nn.L1Loss()
     l2_loss_op = nn.MSELoss()
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=1)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=args.num_workers)
 
     total_l1 = 0.
     total_l2 = 0.
